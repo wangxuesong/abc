@@ -3,10 +3,12 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"reflect"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/urfave/cli"
 )
 
 func run(db *sql.DB, ch chan int64) {
@@ -40,8 +42,8 @@ func run(db *sql.DB, ch chan int64) {
 	close(ch)
 }
 
-func main() {
-	db, err := sql.Open("mysql", "root@unix(/tmp/mysql.sock)/test")
+func tmain(dsn string) {
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		fmt.Println(err.Error())
 		panic(err.Error()) // Just for example purpose. You should use proper error handling instead of panic
@@ -90,4 +92,56 @@ func main() {
 	// t, _ := time.ParseDuration(fmt.Sprintf("%dns", ts[0]))
 	// fmt.Printf("time duration: %v\n", t)
 	fmt.Println("Hello")
+}
+
+func generalDsn(user, password, host, port string) string {
+	dsn_user := user
+	if password != "" {
+		dsn_user = dsn_user + ":" + password
+	}
+	var dsn_proto, dsn_address string
+	if host == "" {
+		dsn_proto = "unix"
+		dsn_address = "/tmp/mysql.sock"
+	} else {
+		dsn_proto = "tcp"
+		dsn_address = host + ":" + port
+	}
+	return fmt.Sprintf("%s@%s(%s)/test", dsn_user, dsn_proto, dsn_address)
+}
+
+func main() {
+	var user string
+	var passwd string
+	var host string
+	var port string
+
+	app := cli.NewApp()
+	app.Name = "abc"
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:        "user, u",
+			Value:       "root",
+			Destination: &user,
+		},
+		cli.StringFlag{
+			Name:        "password, p",
+			Value:       "",
+			Destination: &passwd,
+		},
+		cli.StringFlag{
+			Name:        "host",
+			Value:       "",
+			Destination: &host,
+		},
+		cli.StringFlag{
+			Name:        "port, P",
+			Value:       "5258",
+			Destination: &port,
+		},
+	}
+	app.Action = func(c *cli.Context) error { return nil }
+	app.Run(os.Args)
+	// fmt.Println(user, passwd, host)
+	tmain(generalDsn(user, passwd, host, port))
 }
