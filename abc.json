@@ -1,0 +1,10 @@
+[
+    {
+        "case": "chaxun",
+        "datarule": [1, 2, 3],
+        "datafile": "./datafile/test2.data",
+        "tempfile": "./tempfile/test.temp",
+        "transnum": 10,
+        "threadnum": 3
+    }
+]
